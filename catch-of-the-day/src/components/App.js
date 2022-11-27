@@ -4,12 +4,26 @@ import Order from "./Order";
 import Inventory from "./Inventory";
 import Fish from "./Fish";
 import sampleFishes from "../sample-fishes";
+import base from "../base";
 
 class App extends React.Component {
   state = {
     fishes: {},
     order: {}
   };
+
+  componentDidMount() {
+    const { params } = this.props.match;
+    // firebase ref
+    this.ref = base.syncState(`${params.storeId}/fishes`, {
+      context: this,
+      state: 'fishes'
+    });
+  }
+
+  componentWillUnmount() {
+    base.removeBinding(this.ref);
+  }
 
   addFish = (fish) => {
     console.log(fish)
@@ -26,6 +40,14 @@ class App extends React.Component {
     })
   }
 
+  addToOrder = (key) => {
+    const order = {...this.state.order}
+    order[key] = order[key] ? order[key] + 1 : 1
+    this.setState({
+      order
+    })
+  }
+
   render() {
     return (
       <div className="catch-of-the-day">
@@ -35,11 +57,16 @@ class App extends React.Component {
             { 
               Object
                 .keys(this.state.fishes)
-                .map(f => <Fish key={f} details={this.state.fishes[f]}/>) 
+                .map(f => <Fish  
+                  key={f}
+                  index={f}
+                  details={this.state.fishes[f]}
+                  addToOrder={this.addToOrder}
+                />) 
             }
           </ul>
         </div>
-        <Order />
+        <Order fishes={this.state.fishes} order={this.state.order} />
         <Inventory
           addFish={this.addFish} 
           loadSampleFishes={this.loadSampleFishes}
